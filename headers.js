@@ -10,6 +10,7 @@ window.addEventListener("load", function() {
   chrome.debugger.onEvent.addListener(onEvent);
   document.getElementById("clearbutton").addEventListener("click",cleartext);
   document.getElementById("downloadbutton").addEventListener("click",downloadtext);
+  document.getElementById('setup_test').addEventListener('click', setup_test)
   document.getElementById('go_to_lmp_login').addEventListener('click', go_to_lmp_login);
   document.getElementById('login_to_lmp').addEventListener('click', login_to_lmp);
   document.getElementById('click_lead_tab').addEventListener('click', click_lead_tab);
@@ -21,13 +22,23 @@ window.addEventListener("unload", function() {
 });
 
 
+chrome.tabs.onUpdated.addListener(function(tabId , info) {
+    console.log(info);
+    if (info.status == "complete") {
+        console.log("Page has fully loaded!");
+        //downloadtext();
+    }
+});
+
+
 var requests = {};
 
 function grab_tab_zero(){
 
   return new Promise(function (fulfill, reject){
-    cleartext();
 
+    //cleartext();
+    
     //console.log(chrome.windows);
 
     chrome.windows.getAll( function(win) {
@@ -118,6 +129,21 @@ function inject_file_executescript(passedtabid, codefile){
 }
 
 
+function setup_test() {
+  var response;
+  grab_tab_zero().then(function(resp){
+    response = resp;
+    return inject_file_executescript(response, 'content_script.js');
+  }).then(function(){
+    return inject_code_executescript(response, 'var x = setup_test(); x');
+  }).then(function(successfulfile){
+      console.log("yay");
+  }, function(msg) {
+    console.log("NOOOOO!", msg);
+  });
+}
+
+
 function go_to_lmp_login() {
   var response;
   grab_tab_zero().then(function(resp){
@@ -127,8 +153,10 @@ function go_to_lmp_login() {
     return inject_code_executescript(response, 'var x = go_to_lmp_login(); x');
   }).then(function(successfulfile){
       console.log("yay");
+     // downloadtext();
   }, function(msg) {
     console.log("NOOOOO!", msg);
+    //downloadtext();
   });
 }
 
@@ -137,13 +165,16 @@ function login_to_lmp() {
   grab_tab_zero().then(function(resp){
     response = resp;
     return inject_file_executescript(response, 'content_script.js');
+
   }).then(function(){
     return inject_code_executescript(response, 'var x = login_to_lmp(); x');
 
   }).then(function(successfulfile){
       console.log("yay");
+      //downloadtext();
   }, function(msg) {
     console.log("NOOOOO!", msg);
+    //downloadtext();
   });
 }
 
@@ -156,8 +187,10 @@ function click_lead_tab() {
     return inject_code_executescript(response, 'var x = click_lead_tab(); x');
   }).then(function(successfulfile){
       console.log("yay");
+      //downloadtext();
   }, function(msg) {
     console.log("NOOOOO!", msg);
+    //downloadtext();
   });
 }
 
@@ -171,12 +204,18 @@ function logout() {
     return inject_code_executescript(response, 'var x = logout(); x');
   }).then(function(successfulfile){
       console.log("yay");
+      //downloadtext();
   }, function(msg) {
     console.log("NOOOOO!", msg);
+    //downloadtext();
   });
 }
 
 function cleartext(){
+  document.getElementById("requestwillbesent").innerHTML = 0;
+  document.getElementById("responsereceived").innerHTML = 0;
+  document.getElementById("loadingfinished").innerHTML = 0;
+  document.getElementById("loadingfailed").innerHTML = 0;
 
   var page = document.getElementById("container");
   while (page.hasChildNodes()){
@@ -206,19 +245,76 @@ function onEvent(debuggeeId, message, params) {
   if (tabId != debuggeeId.tabId)
     return;
 
+  console.log(params);
+
+  var sentrequest = parseInt(document.getElementById("requestwillbesent").innerHTML);
+  var responsereceived = parseInt(document.getElementById("responsereceived").innerHTML);
+  var responsefinished = parseInt(document.getElementById("loadingfinished").innerHTML);
+  var loadingfailed = parseInt(document.getElementById("loadingfailed").innerHTML);
+
+  
   var requestDiv = document.createElement("div");
   var urlLine = document.createElement("div");
   urlLine.textContent = message;
   requestDiv.appendChild(urlLine);
   document.getElementById("container").appendChild(requestDiv);
+  
 
-  //basicrequest(params);
+  basicrequest(params);
   if (message == "Network.requestWillBeSent") {
+    sentrequest += 1;
+    document.getElementById("requestwillbesent").innerHTML = sentrequest;
+
     request_request_details(params);
+
   } else if (message == "Network.responseReceived"){
+
+    responsereceived += 1;
+    document.getElementById("responsereceived").innerHTML = responsereceived;
+
     response_details(params);
     response_details_timing(params);
+
+  } else if (message == "Network.loadingFinished") {
+
+    responsefinished += 1;
+    document.getElementById("loadingfinished").innerHTML = responsefinished;
+
+  } else if (message == "Network.loadingFailed") {
+
+    loadingfailed += 1;
+    document.getElementById("loadingfailed").innerHTML = loadingfailed;
   }
+}
+
+
+function finished(paramspassed){
+  var requestDiv = document.createElement("div");
+
+  var titleline = document.createElement("div");
+  var urlLine = document.createElement("div");
+  var finishline = document.createElement("div");
+  var test = [];
+
+    
+  for (var key in paramspassed.request) {
+    if (paramspassed.request.hasOwnProperty(key)) {
+
+      test.push(key + " -> " + paramspassed.request[key]);
+    }
+  
+  }
+  titleline.textContent = "******************finished Details******************";
+
+  /*
+  urlLine.textContent = test;
+  finishline.textContent = "\n \n";
+  requestDiv.appendChild(titleline);
+  requestDiv.appendChild(paramspassed.request['url']);
+  requestDiv.appendChild(finishline);
+  document.getElementById("container").appendChild(requestDiv);
+  */
+
 }
 
 
@@ -249,9 +345,12 @@ function request_request_details(paramspassed){
 
   var titleline = document.createElement("div");
   var urlLine = document.createElement("div");
+  var urlLine1 = document.createElement("div");
+  var urlLine2 = document.createElement("div");
   var finishline = document.createElement("div");
   var test = [];
-
+  var test1 = [];
+  var test2 = [];
     
   for (var key in paramspassed.request) {
     if (paramspassed.request.hasOwnProperty(key)) {
@@ -260,38 +359,31 @@ function request_request_details(paramspassed){
     }
   
   }
-  titleline.textContent = "******************Request Details******************";
-  urlLine.textContent = test;
-  finishline.textContent = "\n \n";
-  requestDiv.appendChild(titleline);
-  requestDiv.appendChild(urlLine);
-  requestDiv.appendChild(finishline);
-  document.getElementById("container").appendChild(requestDiv);
-}
 
 
-function response_details(paramspassed){
+  for (var key in paramspassed.request.headers) {
+    if (paramspassed.request.headers.hasOwnProperty(key)) {
 
-  var requestDiv = document.createElement("div");
-
-  var titleline = document.createElement("div");
-  var urlLine = document.createElement("div");
-  var finishline = document.createElement("div");
-  var test = [];
-
-    
-  for (var key in paramspassed.response) {
-    if (paramspassed.response.hasOwnProperty(key)) {
-
-      test.push(key + " -> " + paramspassed.response[key]);
+      test1.push(key + " -> " + paramspassed.request.headers[key]);
     }
   
   }
-  titleline.textContent = "******************Response Details******************";
+  for (var key in paramspassed.initiator) {
+    if (paramspassed.initiator.hasOwnProperty(key)) {
+
+      test2.push(key + " -> " + paramspassed.initiator[key]);
+    }
+  
+  }
+  titleline.textContent = "******************Request Details******************";
   urlLine.textContent = test;
+  urlLine1.textContent = test1;
+  urlLine2.textContent = test2;
   finishline.textContent = "\n \n";
   requestDiv.appendChild(titleline);
   requestDiv.appendChild(urlLine);
+  requestDiv.appendChild(urlLine1);
+  requestDiv.appendChild(urlLine2);
   requestDiv.appendChild(finishline);
   document.getElementById("container").appendChild(requestDiv);
 }
@@ -351,14 +443,6 @@ function response_details_timing(paramspassed){
 }
 
 
-
-function testtimeing(requestId, request){
-
-  var requestDiv = requests[requestId];
-  // requestDiv.appendChild(formatHeaders(request.timeline.stalled));
-  requestDiv.appendChild("***************************");
-
-}
 
 function appendResponse(requestId, response) {
   var requestDiv = requests[requestId];

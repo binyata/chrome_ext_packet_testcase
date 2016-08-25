@@ -1,3 +1,9 @@
+function setup_test(){
+	window.location.href="https://google.com";
+
+}
+
+
 function go_to_lmp_login() {
 	try{
 		var result =[];
