@@ -1,0 +1,34 @@
+{
+  "name": "SAQE Packet Sniffer",
+  "description": "Displays the live log with the http requests headers",
+  "version": "0.1",
+  "permissions": [
+    "debugger",
+    "tabs",
+    "notifications",
+    "http://*/",
+    "https://*/",
+    "<all_urls>",
+    "activeTab"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_title": "SAQE Packet Sniffer"
+  },
+  "commands": {
+    "toggle-feature": {
+      "suggested_key": { "default": "Ctrl+Shift+E" },
+      "description": "Send a 'toggle-feature' event to the extension"
+    },
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+A",
+        "mac": "MacCtrl+Shift+A"
+      }
+    }
+  },
+  "manifest_version": 2
+}
