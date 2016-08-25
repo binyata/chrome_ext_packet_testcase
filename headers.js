@@ -74,33 +74,43 @@ function grab_tab_zero(){
 function inject_code_executescript(passedtabid, codetext){
 
   return new Promise(function (fulfill, reject){
-
+    var getText = Array();
     try {
-      chrome.tabs.executeScript(passedtabid, {code: codetext});
+      chrome.tabs.executeScript(passedtabid, {code: codetext}, function (result) {
+        console.log(result);
+
+        
+        var successfulfile = 'Success';
+        fulfill(successfulfile);
+        
+      });
 
     }
     catch(err) {
-      reject(err);
+      reject(err.message);
     }
-    var successfulcode = 'Success';
-    fulfill(successfulcode);
-
+    
   });
+
 }
 
 function inject_file_executescript(passedtabid, codefile){
 
   return new Promise(function (fulfill, reject){
-
+    var getText = Array();
     try {
-      chrome.tabs.executeScript(passedtabid, {file: codefile}, function () {
+      chrome.tabs.executeScript(passedtabid, {file: codefile}, function (result) {
+        console.log(result);
+
+        
         var successfulfile = 'Success';
         fulfill(successfulfile);
+        
       });
 
     }
     catch(err) {
-      reject(err);
+      reject(err.message);
     }
     
   });
@@ -114,7 +124,7 @@ function go_to_lmp_login() {
     response = resp;
     return inject_file_executescript(response, 'content_script.js');
   }).then(function(){
-    return inject_code_executescript(response, 'go_to_lmp_login();');
+    return inject_code_executescript(response, 'var x = go_to_lmp_login(); x');
   }).then(function(successfulfile){
       console.log("yay");
   }, function(msg) {
@@ -128,7 +138,8 @@ function login_to_lmp() {
     response = resp;
     return inject_file_executescript(response, 'content_script.js');
   }).then(function(){
-    return inject_code_executescript(response, 'login_to_lmp();');
+    return inject_code_executescript(response, 'var x = login_to_lmp(); x');
+
   }).then(function(successfulfile){
       console.log("yay");
   }, function(msg) {
@@ -142,7 +153,7 @@ function click_lead_tab() {
     response = resp;
     return inject_file_executescript(response, 'content_script.js');
   }).then(function(){
-    return inject_code_executescript(response, 'click_lead_tab();');
+    return inject_code_executescript(response, 'var x = click_lead_tab(); x');
   }).then(function(successfulfile){
       console.log("yay");
   }, function(msg) {
@@ -157,7 +168,7 @@ function logout() {
     response = resp;
     return inject_file_executescript(response, 'content_script.js');
   }).then(function(){
-    return inject_code_executescript(response, 'logout();');
+    return inject_code_executescript(response, 'var x = logout(); x');
   }).then(function(successfulfile){
       console.log("yay");
   }, function(msg) {
